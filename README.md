@@ -5,6 +5,9 @@ The current version uses Ethereum as supporting database for user balances. Actu
 
 Read developers docs @ dev_docs for more info
 
+## Current status.
+At this moment some important features are missing but functional tests are passing. See "TODO" tasks in code to get a detailed review of all pending low-level task and the github issues for other missing features.
+
 ### Build:
 ```  $ gradle build ```
 
@@ -79,4 +82,4 @@ Any contribution is very much appreciated!
 
 ## License
 
-This code is released under the Apache 2.0 License. Please see [LICENSE](LICENSE) for the full text.
+T [![gitter][gitter-image]][gitter-url]his code is released under the Apache 2.0 License. Please see [LICENSE](LICENSE) for the full text.
