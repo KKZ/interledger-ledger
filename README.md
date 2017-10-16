@@ -71,6 +71,13 @@ The files $DOMAIN.key and $DOMAIN.cert will be created. Update 'server.tls_key' 
  * Loggin can be configured at: (src/main/resources/)logback.xml
 
 
+## Vert.X  Notes
+[Eclipse Vert.X toolkit](http://vertx.io/) was used to offer reactive (async) functionality.
+Main Vert.X functionallity includes:
+  * Polyglot (Java, Kotlin, JavaScript,...)
+  * Simple concurrency model. All code is single threaded
+  * Simple, asynchronous programming model for writing truly scalable non-blocking applications.
+  * Distributed event bus spanning server clusters and clients.
 
 ## Development
 
