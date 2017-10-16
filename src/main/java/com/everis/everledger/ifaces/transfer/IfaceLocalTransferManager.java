@@ -4,9 +4,9 @@ import com.everis.everledger.ifaces.transfer.ILocalTransfer.LocalTransferID;
 
 public interface IfaceLocalTransferManager {
 
-    IfaceTransfer getTransferById(LocalTransferID transferId);
+    IfaceTransferIfaceILP getTransferById(LocalTransferID transferId);
 
-    IfaceTransfer executeLocalTransfer(IfaceTransfer transfer); // TODO:(0) Check returned IfaceTransfer
+    IfaceTransferIfaceILP executeLocalTransfer(IfaceTransferIfaceILP transfer); // TODO:(0) Check returned IfaceTransferIfaceILP
     
     boolean doesTransferExists(LocalTransferID transferId);
 

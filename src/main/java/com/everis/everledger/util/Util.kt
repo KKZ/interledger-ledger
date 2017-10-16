@@ -1,5 +1,7 @@
 package com.everis.everledger.util
 
+import com.everis.everledger.ifaces.ILPLedgerInfo
+import com.google.common.collect.ImmutableList
 import io.vertx.core.AsyncResult
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -11,9 +13,8 @@ import org.interledger.Condition
 import org.interledger.Fulfillment
 import org.interledger.InterledgerAddress
 import org.interledger.InterledgerProtocolException
-import org.interledger.ilp.InterledgerError
-import org.interledger.ledger.model.LedgerInfo
-import org.interledger.ledger.money.format.LedgerSpecificDecimalMonetaryAmountFormat
+import org.interledger.ilp.InterledgerProtocolError
+// import org.interledger.ledger.money.format.LedgerSpecificDecimalMonetaryAmountFormat
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
@@ -28,6 +29,7 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
+import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -40,6 +42,7 @@ import java.util.regex.Pattern
 import javax.money.CurrencyUnit
 import javax.money.Monetary
 import javax.money.format.MonetaryAmountFormat
+import kotlin.collections.ArrayList
 
 class JsonObjectBuilder : Supplier<JsonObject> {
 
@@ -141,34 +144,43 @@ object ILPExceptionSupport {
      *
      * @param data
      */
-    fun createILPException(httpErrCode: Int, errCode: InterledgerError.ErrorCode, data: String): HTTPInterledgerException =
-        HTTPInterledgerException(httpErrCode, InterledgerError(errCode, /* triggeredBy */ selfAddress,
-                ZonedDateTime.now(), ArrayList<InterledgerAddress>(), /*self Address*/ selfAddress, data))
+    fun createILPException(httpErrCode: Int, errCode: InterledgerProtocolError.ErrorCode, data: String): HTTPInterledgerException =
+        HTTPInterledgerException(httpErrCode,
+          InterledgerProtocolError.builder()
+              .errorCode(errCode)
+              .triggeredByAddress(selfAddress)
+              .forwardedByAddresses(ImmutableList.of(selfAddress))
+              .triggeredAt(Instant.now())
+              .data(data.toByteArray())
+              .build() )
+
+//      HTTPInterledgerException(httpErrCode, InterledgerError(errCode, /* triggeredBy */ selfAddress,
+//              ZonedDateTime.now(), ArrayList<InterledgerAddress>(), /*self Address*/ selfAddress, data))
 
     // Next follow some wrappers arount createILPException, more human-readable.
     // ----------- Internal --------------
     fun createILPInternalException(data: String): HTTPInterledgerException =
-         createILPException(500, InterledgerError.ErrorCode.T00_INTERNAL_ERROR, data)
+         createILPException(500, InterledgerProtocolError.ErrorCode.T00_INTERNAL_ERROR, data)
 
     // ------------ Unauthorized ------------- // TODO:(RFC) Use new ErrorCode.??_UNAUTHORIZED
     @JvmOverloads fun createILPUnauthorizedException(data: String = "Unauthorized"): HTTPInterledgerException =
-        createILPException(401, InterledgerError.ErrorCode.T00_INTERNAL_ERROR, data)
+        createILPException(401, InterledgerProtocolError.ErrorCode.T00_INTERNAL_ERROR, data)
 
     // ----------- Forbidden --------------// TODO:(RFC) Use new ErrorCode.??_FORBIDDEN
     @JvmOverloads fun createILPForbiddenException(data: String = "Forbidden"): HTTPInterledgerException =
-        createILPException(403, InterledgerError.ErrorCode.T00_INTERNAL_ERROR, "data")
+        createILPException(403, InterledgerProtocolError.ErrorCode.T00_INTERNAL_ERROR, "data")
 
     // ------------ NotFound ------------- // TODO:(ILP) Use new ErrorCode.??_NOT_FOUND
     @JvmOverloads fun createILPNotFoundException(data: String = "Not Found"): HTTPInterledgerException =
-        createILPException(404, InterledgerError.ErrorCode.T00_INTERNAL_ERROR, data)
+        createILPException(404, InterledgerProtocolError.ErrorCode.T00_INTERNAL_ERROR, data)
 
     // ------------- BadRequest ------------
     @JvmOverloads fun createILPBadRequestException(data: String = "Forbidden"): HTTPInterledgerException =
-        createILPException(400, InterledgerError.ErrorCode.F00_BAD_REQUEST, data)
+        createILPException(400, InterledgerProtocolError.ErrorCode.F00_BAD_REQUEST, data)
 
     // ------------- Unprocessable Entity ------------
     @JvmOverloads fun createILPUnprocessableEntityException(data: String = "Unprocessable"): HTTPInterledgerException =
-        createILPException(422, InterledgerError.ErrorCode.F00_BAD_REQUEST, data)
+        createILPException(422, InterledgerProtocolError.ErrorCode.F00_BAD_REQUEST, data)
 }
 
 private data class SimpleLedgerInfo(
@@ -178,7 +190,7 @@ private data class SimpleLedgerInfo(
         private val currencyUnit: CurrencyUnit,
         private val monetaryAmountFormat: MonetaryAmountFormat,
         private val conditionSignPublicKey: PublicKey,
-        private val notificationSignPublicKey: PublicKey) : LedgerInfo {
+        private val notificationSignPublicKey: PublicKey) : ILPLedgerInfo {
     override fun getAddressPrefix()= ilpAddress
     override fun getPrecision() = precision
     override fun getScale() = scale
@@ -250,7 +262,7 @@ object Config {
     //    private static final String sNoticificationSignPrivateKey = getString("ledger.ed25519.notificationSignPrivateKey");
     private val sNoticificationSignPublicKey = getString("ledger.ed25519.notificationSignPublicKey")
 
-    var ilpLedgerInfo: LedgerInfo = SimpleLedgerInfo(
+    var ilpLedgerInfo: ILPLedgerInfo = SimpleLedgerInfo(
             InterledgerAddress.builder().value(ilpPrefix).build(),
             ledgerPrecision,
             ledgerScale,
@@ -300,12 +312,12 @@ object Config {
     val indexHandlerMap: MutableMap<String, Any> = HashMap()
 
     init {
-        indexHandlerMap.put("ilp_prefix", Config.ilpPrefix)
-        indexHandlerMap.put("currency_code", Config.ledgerCurrencyCode)
-        indexHandlerMap.put("currency_symbol", Config.ledgerCurrencySymbol)
-        indexHandlerMap.put("precision", Config.ledgerPrecision)
-        indexHandlerMap.put("scale", Config.ledgerScale)
-        indexHandlerMap.put("version", Config.ledgerVersion)
+        indexHandlerMap.put("ilp_prefix", ilpPrefix)
+        indexHandlerMap.put("currency_code", ledgerCurrencyCode)
+        indexHandlerMap.put("currency_symbol", ledgerCurrencySymbol)
+        indexHandlerMap.put("precision", ledgerPrecision)
+        indexHandlerMap.put("scale", ledgerScale)
+        indexHandlerMap.put("version", ledgerVersion)
 
         val services = HashMap<String, String>()
 
@@ -314,7 +326,7 @@ object Config {
         //   - plugin.js (REQUIRED_LEDGER_URLS) @ five-bells-plugin
         //   The conector five-bells-plugin of the js-ilp-connector expect a
         //   map urls { health:..., transfer: ...,}
-        val base = Config.publicURL.toString()
+        val base = publicURL.toString()
         // Required by wallet
         services.put("health", base + "health")
         services.put("accounts", base + "accounts")
@@ -330,7 +342,7 @@ object Config {
         // services.put("transfer_rejection", base + "not_available") // required by ilp-kit not RFCs
         indexHandlerMap.put("urls", services)
         indexHandlerMap.put("condition_sign_public_key",
-                DSAPrivPubKeySupport.savePublicKey(Config.ilpLedgerInfo.conditionSignPublicKey))
+                DSAPrivPubKeySupport.savePublicKey(ilpLedgerInfo.conditionSignPublicKey))
 
 
         /* TODO:(0) Fill connectors with real connected ones */
@@ -374,7 +386,7 @@ object Config {
      * Execute this Config.main as java application to check that config is OK!
      */
     @JvmStatic fun main(args: Array<String>) { // TODO:(0) Move to Unit tests
-        println(Config.debug)
+        println(debug)
     }
 
 }
@@ -540,6 +552,6 @@ object VertxRunner {
  */
 // TODO:(0) Change to
 //     data class HTTPInterledgerException(val httpErrorCode: Int, ILPException: InterledgerProtocolException)
-class HTTPInterledgerException(val httpErrorCode: Int, interledgerError: InterledgerError) :
+class HTTPInterledgerException(val httpErrorCode: Int, interledgerError: InterledgerProtocolError) :
         InterledgerProtocolException(interledgerError)
 

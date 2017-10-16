@@ -14,14 +14,11 @@ import java.util.Random
 import java.util.UUID
 
 
-import org.javamoney.moneta.Money
-
-import org.interledger.ledger.model.TransferStatus
-
 import com.everis.everledger.util.Config
 import com.everis.everledger.ifaces.account.IfaceLocalAccount
 import com.everis.everledger.ifaces.transfer.ILocalTransfer
-import com.everis.everledger.ifaces.transfer.IfaceTransfer
+import com.everis.everledger.ifaces.transfer.IfaceTransferIfaceILP
+import com.everis.everledger.ifaces.transfer.TransferStatus
 
 import com.everis.everledger.util.TimeUtils
 
@@ -58,7 +55,7 @@ fun ILPSpec2LocalTransferID(ilpTransferID: UUID): LocalTransferID {
     return LocalTransferID(ilpTransferID.toString())
 }
 
-data class SimpleTransfer (
+data class SimpleTransferIfaceILP(
         val id: LocalTransferID,
         val _TXInput: TXInputImpl, val _TXOutput: TXOutputImpl,
         val executionCond: Condition,
@@ -75,7 +72,7 @@ data class SimpleTransfer (
         val executionFF   : Fulfillment = FF_NOT_PROVIDED,
         val cancelationFF : Fulfillment = FF_NOT_PROVIDED,
         var receipt: String = ""
-    ) : IfaceTransfer {
+    ) : IfaceTransferIfaceILP {
             internal val fromAccount: IfaceLocalAccount
 
             init { // TODO:(0) Check this is executed after val initialization
@@ -148,7 +145,7 @@ data class SimpleTransfer (
                 if (this.executionCondition != CC_NOT_PROVIDED) {
                     jo.put("execution_condition", this.executionCondition.toString())
                 }
-                //        if (! this.getCancellationCondition().equals(SimpleTransfer.CC_NOT_PROVIDED)) {
+                //        if (! this.getCancellationCondition().equals(SimpleTransferIfaceILP.CC_NOT_PROVIDED)) {
                 //            jo.put("cancellation_condition", this.getCancellationCondition().toString());
                 //        }
                 jo.put("state", this.getTransferStatus().toString().toLowerCase())

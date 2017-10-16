@@ -1,7 +1,6 @@
 package com.everis.everledger.ifaces.transfer;
 
 import com.everis.everledger.ifaces.account.IfaceLocalAccount;
-import org.interledger.ledger.model.TransferStatus;
 import javax.money.MonetaryAmount;
 
 /*
@@ -9,7 +8,7 @@ import javax.money.MonetaryAmount;
  * interface for a transfer of money from a list of debitors
  * to a list of creditors
  * 
- * The ILP interface is defined @ (java-ilp-core)org.interledger.ilp.ledger.model.LedgerTransfer
+ * The ILP interface is defined @ (java-ilp-core)org.interledger.ilp.ledger.model.IfaceILPLedgerTransfer
  * 
  * See SimpleLedgerTransfer for more info
  */

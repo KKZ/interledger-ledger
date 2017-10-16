@@ -16,31 +16,30 @@ import javax.money.MonetaryAmount
 
 import org.interledger.Condition
 import org.interledger.Fulfillment
-import org.interledger.ledger.model.TransferStatus
 //import org.javamoney.moneta.Money
 // import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.everis.everledger.handlers.TransferWSEventHandler
 import com.everis.everledger.ifaces.account.IfaceLocalAccount
-import com.everis.everledger.ifaces.transfer.IfaceTransfer
+import com.everis.everledger.ifaces.transfer.IfaceTransferIfaceILP
 import com.everis.everledger.ifaces.transfer.IfaceTransferManager
 
 import com.everis.everledger.util.ConversionUtil
 import com.everis.everledger.util.ILPExceptionSupport
 
 import com.everis.everledger.util.Config
-import com.everis.everledger.impl.SimpleTransfer
+import com.everis.everledger.impl.SimpleTransferIfaceILP
 import com.everis.everledger.impl.CC_NOT_PROVIDED
 import com.everis.everledger.ifaces.transfer.ILocalTransfer
+import com.everis.everledger.ifaces.transfer.TransferStatus
 import com.everis.everledger.impl.ILPSpec2LocalTransferID
-import org.interledger.ilp.InterledgerError
+import org.interledger.ilp.InterledgerProtocolError
 import org.web3j.crypto.CipherException
 import org.web3j.crypto.Credentials
 import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
-import org.web3j.protocol.core.Request
 import org.web3j.protocol.core.methods.response.EthGetBalance
 import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.protocol.http.HttpService
@@ -50,7 +49,6 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.util.concurrent.ExecutionException
 
 /**
  * Simple in-memory {@code SimpleLedgerTransferManager}.
@@ -74,9 +72,9 @@ private val accountManager  = SimpleAccountManager
 //     return singleton
 // }
 
-private fun notifyUpdate(transfer : IfaceTransfer, fulfillment : Fulfillment, isExecution : Boolean){
+private fun notifyUpdate(transfer : IfaceTransferIfaceILP, fulfillment : Fulfillment, isExecution : Boolean){
     try {
-        val notification : JsonObject = (transfer as SimpleTransfer).toILPJSONStringifiedFormat()
+        val notification : JsonObject = (transfer as SimpleTransferIfaceILP).toILPJSONStringifiedFormat()
         // Notify affected accounts:
         val eventType : TransferWSEventHandler.EventType =
                 if   (transfer.getTransferStatus() == TransferStatus.PROPOSED)
@@ -104,7 +102,7 @@ object SimpleTransferManager : IfaceTransferManager {
 
 
     private val log          = LoggerFactory.getLogger(SimpleTransferManager::class.java)
-    private val transferMap  = HashMap<ILocalTransfer.LocalTransferID, IfaceTransfer>() // In-memory database of pending/executed/cancelled transfers
+    private val transferMap  = HashMap<ILocalTransfer.LocalTransferID, IfaceTransferIfaceILP>() // In-memory database of pending/executed/cancelled transfers
 
     fun developerTestingResetTransfers() { // TODO:(?) Make static?
         if (! Config.unitTestsActive) {
@@ -116,7 +114,7 @@ object SimpleTransferManager : IfaceTransferManager {
 
 
     // START IfaceLocalTransferManager implementation {
-    override fun getTransferById(transferId : ILocalTransfer.LocalTransferID ) : IfaceTransfer  {
+    override fun getTransferById(transferId : ILocalTransfer.LocalTransferID ) : IfaceTransferIfaceILP {
         val result = transferMap[transferId] ?: throw ILPExceptionSupport.createILPNotFoundException("transfer '${transferId.uniqueID}' not found")
         if (result.transferStatus == TransferStatus.REJECTED) {
             throw ILPExceptionSupport.createILPUnprocessableEntityException(
@@ -126,15 +124,15 @@ object SimpleTransferManager : IfaceTransferManager {
         return result
     }
 
-    override fun executeLocalTransfer(transfer : IfaceTransfer ) : IfaceTransfer {
+    override fun executeLocalTransfer(transfer : IfaceTransferIfaceILP) : IfaceTransferIfaceILP {
         // AccountUri sender, AccountUri recipient, MonetaryAmount amount)
         // STEP 1: Pass all debits to first account.
         __executeLocalTransfer(
                 transfer.txInput .localAccount,
                 transfer.txOutput.localAccount, transfer.amount)
 
-        return (transfer as SimpleTransfer).copy(
-                    _transferStatus=TransferStatus.EXECUTED,
+        return (transfer as SimpleTransferIfaceILP).copy(
+                    _transferStatus= TransferStatus.EXECUTED,
                     DTTM_prepared=ZonedDateTime.now(),
                     DTTM_executed=ZonedDateTime.now() )
     }
@@ -147,10 +145,10 @@ object SimpleTransferManager : IfaceTransferManager {
 
     // START IfaceILPSpecTransferManager implementation {
     override fun getTransfersByExecutionCondition(condition : Condition ) :
-            MutableList<IfaceTransfer> {
+            MutableList<IfaceTransferIfaceILP> {
         // For this simple implementation just run over existing transfers until
-        val result = ArrayList<IfaceTransfer>()
-        //   = HashMap<LocalTransferID, IfaceTransfer>();// In-memory database of pending/executed/cancelled transfers
+        val result = ArrayList<IfaceTransferIfaceILP>()
+        //   = HashMap<LocalTransferID, IfaceTransferIfaceILP>();// In-memory database of pending/executed/cancelled transfers
         for ( transferId : ILocalTransfer.LocalTransferID in transferMap.keys) {
             val transfer = transferMap.get(transferId) ?: throw RuntimeException("null found for transferId "+transferId)
             if (transfer.getExecutionCondition() == condition) {
@@ -160,7 +158,7 @@ object SimpleTransferManager : IfaceTransferManager {
         return result
     }
 
-    override fun prepareILPTransfer(newTransfer : IfaceTransfer ) {
+    override fun prepareILPTransfer(newTransfer : IfaceTransferIfaceILP) {
         log.debug("createNewRemoteILPTransfer")
 
         if (doesTransferExists(newTransfer.getTransferID())) {
@@ -187,18 +185,18 @@ object SimpleTransferManager : IfaceTransferManager {
     }
 
 
-    private fun executeOrCancelILPTransfer(transfer : IfaceTransfer , FF : Fulfillment , isExecution : Boolean  /*false => isCancellation*/) : IfaceTransfer {
-        val result: IfaceTransfer
+    private fun executeOrCancelILPTransfer(transfer : IfaceTransferIfaceILP, FF : Fulfillment, isExecution : Boolean  /*false => isCancellation*/) : IfaceTransferIfaceILP {
+        val result: IfaceTransferIfaceILP
         if (isExecution /* => DisburseFunds */) {
             var txReceipt = __executeLocalTransfer(sender = accountManager.holdAccountILP, recipient = transfer.txOutput.localAccount, amount = transfer.amount)
-            result = (transfer as SimpleTransfer).copy(
+            result = (transfer as SimpleTransferIfaceILP).copy(
                     _transferStatus=TransferStatus.EXECUTED,
                     DTTM_executed=ZonedDateTime.now(),
                     executionFF=FF,
                     receipt=txReceipt)
         } else /* => Cancellation/Rollback  */ {
             var txReceipt = __executeLocalTransfer(sender = accountManager.holdAccountILP, recipient = transfer.txInput.localAccount, amount = transfer.amount)
-            result = (transfer as SimpleTransfer).copy(
+            result = (transfer as SimpleTransferIfaceILP).copy(
                     _transferStatus=TransferStatus.REJECTED,
                     DTTM_executed=ZonedDateTime.now(),
                     executionFF=FF,
@@ -209,12 +207,12 @@ object SimpleTransferManager : IfaceTransferManager {
     }
 
     // TODO:(?) Update returned instance in ddbb if needed
-    override fun executeILPTransfer(transfer : IfaceTransfer,    executionFulfillment : Fulfillment ) : IfaceTransfer {
+    override fun executeILPTransfer(transfer : IfaceTransferIfaceILP, executionFulfillment : Fulfillment ) : IfaceTransferIfaceILP {
         return executeOrCancelILPTransfer(transfer, executionFulfillment, true)
     }
 
     // TODO:(?) Update returned instance in ddbb if needed
-    override fun cancelILPTransfer (transfer : IfaceTransfer, cancellationFulfillment : Fulfillment ) : IfaceTransfer {
+    override fun cancelILPTransfer (transfer : IfaceTransferIfaceILP, cancellationFulfillment : Fulfillment ) : IfaceTransferIfaceILP {
         return executeOrCancelILPTransfer(transfer, cancellationFulfillment, false)
     }
 
@@ -309,7 +307,7 @@ object SimpleTransferManager : IfaceTransferManager {
                 printWriter.flush()
 
                 throw ILPExceptionSupport.createILPException(
-                   422, InterledgerError.ErrorCode.F04_INSUFFICIENT_DST_AMOUNT,
+                   422, InterledgerProtocolError.ErrorCode.F04_INSUFFICIENT_DST_AMOUNT,
                         "Insufficient amount due to Ethereum error: " + e.toString() )
             }
             throw RuntimeException(e)

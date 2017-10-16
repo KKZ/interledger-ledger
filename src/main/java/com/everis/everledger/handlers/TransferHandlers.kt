@@ -10,6 +10,7 @@ import com.everis.everledger.util.Config
 import com.everis.everledger.ifaces.account.IfaceLocalAccountManager
 import com.everis.everledger.ifaces.transfer.ILocalTransfer
 import com.everis.everledger.ifaces.transfer.IfaceTransferManager
+import com.everis.everledger.ifaces.transfer.TransferStatus
 import com.everis.everledger.impl.*
 import com.everis.everledger.impl.manager.SimpleAccountManager
 import com.everis.everledger.impl.manager.SimpleTransferManager
@@ -23,8 +24,7 @@ import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.RoutingContext
 import org.interledger.Condition
 import org.interledger.Fulfillment
-import org.interledger.ilp.InterledgerError
-import org.interledger.ledger.model.TransferStatus
+import org.interledger.ilp.InterledgerProtocolError
 import org.javamoney.moneta.Money
 import java.net.URI
 import java.security.MessageDigest
@@ -102,7 +102,7 @@ private constructor() : RestEndpointHandler(
             throw ILPExceptionSupport.createILPBadRequestException("unparseable amount")
         }
         if ( debit_ammount.number.toFloat().toDouble() == 0.0) {
-            throw ILPExceptionSupport.createILPException(422, InterledgerError.ErrorCode.F00_BAD_REQUEST, "debit is zero")
+            throw ILPExceptionSupport.createILPException(422, InterledgerProtocolError.ErrorCode.F00_BAD_REQUEST, "debit is zero")
         }
         val debitor = AM.getAccountById(input_account_id)
         _assertAuthInfoMatchTXDebitorOrThrow(debitor, ai)
@@ -147,12 +147,12 @@ private constructor() : RestEndpointHandler(
 
         if (credit_ammount.getNumber().toFloat().toDouble() == 0.0) {
             throw ILPExceptionSupport.createILPException(422,
-                    InterledgerError.ErrorCode.F00_BAD_REQUEST, "credit is zero")
+                    InterledgerProtocolError.ErrorCode.F00_BAD_REQUEST, "credit is zero")
         }
         val creditor = AM.getAccountById(credit_account_id)
         if (!credit_ammount.equals(debit_ammount)) {
             throw ILPExceptionSupport.createILPException(422,
-                    InterledgerError.ErrorCode.F00_BAD_REQUEST, "total credits do not match total debits")
+                    InterledgerProtocolError.ErrorCode.F00_BAD_REQUEST, "total credits do not match total debits")
         }
 
         val data = "" // Not yet used
@@ -174,7 +174,7 @@ private constructor() : RestEndpointHandler(
         //            log.debug("transfer status " + status);
         //        }
 
-        val receivedTransfer = SimpleTransfer(
+        val receivedTransfer = SimpleTransferIfaceILP(
                 transferID as LocalTransferID,
                 TXInputImpl(debitor, debit_ammount),
                 TXOutputImpl(creditor, credit_ammount/*, memo_ph*/),
@@ -203,7 +203,7 @@ private constructor() : RestEndpointHandler(
         }
         try { // TODO:(?) Refactor Next code for notification (next two loops) are
             // duplicated in FulfillmentHandler
-            val resource = (effectiveTransfer as SimpleTransfer).toILPJSONStringifiedFormat()
+            val resource = (effectiveTransfer as SimpleTransferIfaceILP).toILPJSONStringifiedFormat()
 
             // Notify affected accounts:
             val eventType = if (receivedTransfer.transferStatus == TransferStatus.PREPARED)
@@ -217,7 +217,7 @@ private constructor() : RestEndpointHandler(
             log.warn("transaction created correctly but ilp-connector couldn't be notified due to " + e.toString())
         }
 
-        val response = (effectiveTransfer as SimpleTransfer).toILPJSONStringifiedFormat().encode()
+        val response = (effectiveTransfer as SimpleTransferIfaceILP).toILPJSONStringifiedFormat().encode()
 
         context.response()
                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
@@ -235,7 +235,7 @@ private constructor() : RestEndpointHandler(
         val transfer = TM.getTransferById(ILPSpec2LocalTransferID(ilpTransferID))
         val debitor = AM.getAccountById(transfer.txInput.localAccount.localID)
         _assertAuthInfoMatchTXDebitorOrThrow(debitor, ai)
-        response( context, HttpResponseStatus.OK, (transfer as SimpleTransfer).toILPJSONStringifiedFormat())
+        response( context, HttpResponseStatus.OK, (transfer as SimpleTransferIfaceILP).toILPJSONStringifiedFormat())
     }
 
     private fun _assertAuthInfoMatchTXDebitorOrThrow(debitor: IfaceAccount, ai : AuthInfo){
@@ -289,7 +289,7 @@ class TransfersHandler : RestEndpointHandler(arrayOf(HttpMethod.GET), arrayOf("t
             if ( !ai.isAdmin &&
                  !( AM.authInfoMatchAccount(debitor  , ai) ||
                     AM.authInfoMatchAccount(creditor , ai) ) ) continue
-            ja.add((transfer as SimpleTransfer).toILPJSONStringifiedFormat())
+            ja.add((transfer as SimpleTransferIfaceILP).toILPJSONStringifiedFormat())
         }
 
         val response = ja.encode()
@@ -441,7 +441,7 @@ class TransferStateHandler : RestEndpointHandler(
 class FulfillmentHandler : RestEndpointHandler(arrayOf(HttpMethod.GET, HttpMethod.PUT), arrayOf("transfers/:$transferUUID/fulfillment")) {
 
     override fun handlePut(context: RoutingContext) {
-        val ai = AuthManager.authenticate(context)
+        // val ai = AuthManager.authenticate(context)
         log.trace(this.javaClass.name + "handlePut invoqued ")
 
         /* (request from ILP Connector)
@@ -483,7 +483,7 @@ class FulfillmentHandler : RestEndpointHandler(arrayOf(HttpMethod.GET, HttpMetho
         //        // REF: http://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java
         //        byte[] fulfillmentBytes = DatatypeConverter.parseHexBinary(sFulfillment);
         val inputFF = Fulfillment.of(fulfillmentBytes)
-        val message = byteArrayOf()
+        // val message = byteArrayOf()
         var ffExisted = false // TODO:(0) Recheck usage
         log.trace("transfer.getExecutionCondition():" + transfer.executionCondition.toString())
         //        log.trace("transfer.getCancellationCondition():"+transfer.getCancellationCondition().toString());

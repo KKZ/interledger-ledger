@@ -11,16 +11,21 @@ buildscript {
 
 apply plugin: 'java'
 // https://kotlinlang.org/docs/reference/using-gradle.html#plugin-and-versions
-apply plugin: 'kotlin'
+// apply plugin: 'kotlin'
+apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'eclipse'
 apply plugin: 'application'
 
 
-// mainClassName = 'com.everis.everledger.BootUpKotlinKt'
+def use_local_java_ilp_core = false
+
+
+
+mainClassName = 'com.everis.everledger.BootUpKotlinKt'
 
 defaultTasks 'run'
 
-// apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "org.jetbrains.kotlin.jvm"
 
 Properties props = new Properties()
 props.load(new FileInputStream("${projectDir}/interledger_versioning.prop"))
@@ -30,7 +35,7 @@ props.load(new FileInputStream("${projectDir}/external_library_versioning.prop")
 
 group = 'org.interledger'
 version = '1.0-SNAPSHOT'
-description = "Interledger Java simple ledger (VertX Backend)"
+description = "Interledger Java simple ledger using VertX"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -50,11 +55,10 @@ repositories {
 
 dependencies {
     // compilation enabled just during development
-    if (true) {
-        // compile project(':web3j')
+    if (use_local_java_ilp_core) {
         compile project(':java-ilp-core')
     } else {
-        compile     "org.interledger:java-ilp-core:${java_ilp_core_version}"
+        compile     "org.interledger:ilp-core:${java_ilp_core_version}"
     }
     compile     "org.web3j:core:2.3.0"
     compile     "javax.money:money-api:${money_api_version}"

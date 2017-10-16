@@ -7,14 +7,14 @@ import org.interledger.Fulfillment;
 
 public interface IfaceILPSpecTransferManager {
    // TODO:(0)
-    java.util.List<IfaceTransfer> getTransfersByExecutionCondition(Condition condition);
+    java.util.List<IfaceTransferIfaceILP> getTransfersByExecutionCondition(Condition condition);
 
     // TODO:(0) proposeILPTransfer(ILPTransfer
-    void prepareILPTransfer(IfaceTransfer newTransfer); // TODO:(0) Rename / split into propose/prepare ?
+    void prepareILPTransfer(IfaceTransferIfaceILP newTransfer); // TODO:(0) Rename / split into propose/prepare ?
 
-    IfaceTransfer executeILPTransfer(IfaceTransfer transfer, Fulfillment executionFulfillment);
+    IfaceTransferIfaceILP executeILPTransfer(IfaceTransferIfaceILP transfer, Fulfillment executionFulfillment);
 
-    IfaceTransfer cancelILPTransfer(IfaceTransfer transfer, Fulfillment cancellationFulfillment);
+    IfaceTransferIfaceILP cancelILPTransfer(IfaceTransferIfaceILP transfer, Fulfillment cancellationFulfillment);
     
     boolean doesTransferExists(UUID transferId);
 

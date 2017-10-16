@@ -101,13 +101,13 @@ abstract class RestEndpointHandler(httpMethods: Array<HttpMethod>, uriList: Arra
 
         } catch (ex: HTTPInterledgerException) {
             log.error("request body for captured exception:" + context.body.toString())
-            val err = ex.interledgerError
-            log.error(err.errCode.toString() + " -> " + err.errorType + " \n" + err.data)
-            println(err.errCode.toString() + " -> " + err.errorType + " \n" + err.data)
+            val err = ex.interledgerProtocolError
+            log.error(err.errorCode.toString() + " -> " + " \n" + err.data)
+            println(err.errorCode.toString() + " -> " + " \n" + err.data)
 
             response( context, HttpResponseStatus.valueOf(ex.httpErrorCode),
-                    buildJSONWith( "errCode", err.errCode.code,
-                      "triggeredBy", err.triggeredBy.value.toString(), "data", err.data) )
+                    buildJSONWith( "errCode", err.errorCode.code,
+                      "triggeredBy", err.triggeredByAddress.value.toString(), "data", err.data) )
         }
 
     }

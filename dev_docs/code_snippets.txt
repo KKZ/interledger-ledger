@@ -16,10 +16,20 @@ Get Internal Config parameters (related to ledger implementation):
 -------------------
 
 Abort request and Launch Exception:
+    // (See Util.kt)
+    // HTTPInterledgerException(httpErrCode,
+    //       InterledgerProtocolError.builder()
+    //           .errorCode(errCode)
+    //           .triggeredByAddress(selfAddress)
+    //           .forwardedByAddresses(ImmutableList.of(selfAddress))
+    //           .triggeredAt(Instant.now())
+    //           .data(data.toByteArray())
+    //           .build() )
+
     import org.interledger.ilp.common.api.util.ILPExceptionSupport;
     import org.interledger.ilp.exceptions.InterledgerException;
     import org.interledger.ilp.exceptions.InterledgerException.ErrorCode;
-    
+
     ILPExceptionSupport.launchILPException(InterledgerException.ErrorCode.XXX , "..."/* data */)
     or (with default INTERNAL ERROR)
     ILPExceptionSupport.launchILPException(this.getClass().getName() + " constructor params can NOT be null"/* data */);
@@ -61,3 +71,5 @@ LedgerFactory.getDefaultLedger().getInfo().getCurrencyUnit().getCurrencyCode()
             }
         });
     }
+
+-------------------------
