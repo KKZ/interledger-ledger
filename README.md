@@ -29,10 +29,10 @@ At this moment some important features are missing but functional tests are pass
 
 ###IntelliJ integration:
   * Create a new project and import interledger-ledger and java-ilp-core in sibling directories as gradle modules.
-  * To use the java-ilp-core master branch set ```use_java_ilp_core = false ```  in build.gradle. To use a local java-ilp-core (in sibling directory) set it to true.
+  * To use the java-ilp-core master branch set ```use_local_java_ilp_core = false ```  in build.gradle. To use a local java-ilp-core (in sibling directory) set it to true.
 
 ### Eclipse integration:
-  * Option 1: (Recomended): Add official Eclipse Gradle pluging. Then import this project as gradle project. Read notes about use_java_ilp_core in IntelliJ integration.
+  * Option 1: (Recomended): Add official Eclipse Gradle pluging. Then import this project as gradle project. Read notes about use_local_java_ilp_core in IntelliJ integration.
   * Option 2: (Manual): Create eclipse .project & .classpath files for each project with ``` $ gradle eclipse ```.
     (Then use File -> Import ... -> Existing projects from workspace and select the "Search for nested projects")
   * There is an eclipse kotlin plugin, but not as mature as the IntelliJ one. (WARN: Not tested).
