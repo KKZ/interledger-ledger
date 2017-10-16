@@ -1,0 +1,104 @@
+// REF: https://github.com/JetBrains/kotlin-examples/blob/master/gradle/hello-world/build.gradle
+buildscript {
+    ext.kotlin_version = '1.1.3'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.4-3"
+    }
+}
+
+apply plugin: 'java'
+// https://kotlinlang.org/docs/reference/using-gradle.html#plugin-and-versions
+apply plugin: 'kotlin'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+
+
+// mainClassName = 'com.everis.everledger.BootUpKotlinKt'
+
+defaultTasks 'run'
+
+// apply plugin: "org.jetbrains.kotlin.jvm"
+
+Properties props = new Properties()
+props.load(new FileInputStream("${projectDir}/interledger_versioning.prop"))
+  props.each { prop -> project.ext.set(prop.key, prop.value) }
+props.load(new FileInputStream("${projectDir}/external_library_versioning.prop"))
+  props.each { prop -> project.ext.set(prop.key, prop.value) }
+
+group = 'org.interledger'
+version = '1.0-SNAPSHOT'
+description = "Interledger Java simple ledger (VertX Backend)"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': description,
+                   'Implementation-Version': version
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven { url "http://repo.maven.apache.org/maven2" }
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    // compilation enabled just during development
+    if (true) {
+        // compile project(':web3j')
+        compile project(':java-ilp-core')
+    } else {
+        compile     "org.interledger:java-ilp-core:${java_ilp_core_version}"
+    }
+    compile     "org.web3j:core:2.3.0"
+    compile     "javax.money:money-api:${money_api_version}"
+    compile     "org.javamoney:moneta:${moneta_version}"
+    compile     "com.google.guava:guava:${guava_version}"
+    compile     "org.apache.commons:commons-lang3:${commons_lang3_version}"
+    compile     "org.slf4j:slf4j-api:${slf4j_api_version}"
+//  compile     "com.typesafe:config:${typesafe_config_version}"
+    compile     "ch.qos.logback:logback-classic:${logback_classic_version}"
+    compile     "io.vertx:vertx-web:${vertx_web_version}"
+    compile     "io.jsonwebtoken:jjwt:${jsonwebtoken_version}"
+    compile     "org.jetbrains.kotlin:kotlin-stdlib-jre8"
+    compile     "org.jetbrains.kotlin:kotlin-reflect"
+    testCompile "junit:junit:${junit_version}"
+    testCompile "org.hamcrest:hamcrest-core:${hamcrest_core_version}"
+	testCompile "org.jetbrains.kotlin:kotlin-test"
+	testCompile "org.jetbrains.kotlin:kotlin-test-junit"
+}
+
+sourceSets {
+    // main.java.srcDirs   += 'src/main/java'
+    main.kotlin.srcDirs += 'src/main/java'
+}
+task launchServer(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+
+  main = 'org.interledger.everledger.common.api.ILPLedgerAPIBootUpVerticle'
+
+  // arguments to pass to the application
+  // args 'appArg1'
+}
+
+task printRandomDSAEd25519PrivPubKey(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'org.interledger.everledger.common.util.DSAPrivPubKeySupport'
+}
+
+// task launchTestWebSocket(type: JavaExec) {
+//   classpath = sourceSets.main.runtimeClasspath
+// 
+//   main = 'org.interledger.ilp.ledger.api.TestWebSocket'
+// 
+// }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.0'
+}

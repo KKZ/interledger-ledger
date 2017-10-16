@@ -1,0 +1,30 @@
+Web3j web3 = Web3j.build(new HttpService()); // defaults to http://localhost:8545/
+// Alt:        ... build(new    UnixIpcService("/path/to/socket"   ));
+// Alt:        ... build(new WindowsIpcService("/path/to/namedpipe"));
+
+To send ASYNCHronous requests using a (Java JDK) Future:
+   Web3ClientVersion web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
+   String clientVersion = web3ClientVersion.getWeb3ClientVersion();
+
+To use an RxJava Observable: (An Observable *streams events to observers)
+   web3.web3ClientVersion().observable().subscribe( x ->
+       { String clientVersion = x.getWeb3ClientVersion(); ... });
+
+To send SYNCHronous requests:
+   Web3ClientVersion web3ClientVersion = web3.web3ClientVersion().send();
+   String clientVersion = web3ClientVersion.getWeb3ClientVersion();
+
+
+Transactions:
+   BigInteger value = Convert.toWei("1.0", Convert.Unit.ETHER).toBigInteger();
+
+
+   TransactionReceipt transactionReceipt = Transfer.sendFunds(
+       web3,
+       /*Credentials*/credentials,
+       "0x...",
+       BigDecimal.valueOf(1.0),
+       Convert.Unit.ETHER);
+
+   // Alt: Raw TX:
+   RawTransaction rawTransaction = RawTransaction.createEtherTransaction( <nonce>, <gas price>, <gas limit>, <toAddress>, value);
