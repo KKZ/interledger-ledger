@@ -89,4 +89,4 @@ Any contribution is very much appreciated!
 
 ## License
 
-T [![gitter][gitter-image]][gitter-url]his code is released under the Apache 2.0 License. Please see [LICENSE](LICENSE) for the full text.
+This code is released under the Apache 2.0 License. Please see [LICENSE](LICENSE) for the full text.
