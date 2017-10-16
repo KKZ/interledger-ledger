@@ -1,16 +1,7 @@
-# Java ILP master repository [![gitter][gitter-image]][gitter-url] [![CI][CI-image]][CI-url] 
-
-[gitter-image]: https://badges.gitter.im/interledger/java.svg
-[gitter-url]: https://gitter.im/interledger/java
-
-[CI-image]: https://travis-ci.org/everis-innolab/java-ilp-master.svg?branch=master
-[CI-url]: https://travis-ci.org/everis-innolab/java-ilp-master
-
 ## About
-Java ledger implementing HTLA Interledger RFC .
-https://github.com/interledger/rfcs/tree/master/0022-hashed-timelock-agreements
+Java/Kotlin ledger implementing a compliant subset of the [five-bells-ledger API](https://github.com/interledger/rfcs/tree/master/0012-five-bells-ledger-api) and Conditional Payment Channels (with HTLCs) as described in [HTLA Interledger RFC](https://github.com/interledger/rfcs/tree/master/0022-hashed-timelock-agreements). This project also serve to test [java-ilp-core  interfaces and specs](https://github.com/interledger/java-ilp-core/). 
 
- expected by ilp-plugin-bells and the java interfaces defined @ https://github.com/interledger/java-ilp-core/ . It uses an in-memory database, so all changes are lost after reboot.
+The current version uses Ethereum as supporting database for user balances. Actually, any backend (SQL database, blockchain, ...) able to support the com.everis.everledger.ifaces.account.IfaceAccount can be (theorically) be used as storage/balance-ledger. See [related issue](https://github.com/everis-innolab/interledger-ledger/issues/1)
 
 Read developers docs @ dev_docs for more info
 
@@ -21,10 +12,8 @@ Read developers docs @ dev_docs for more info
 ```  $ gradle test ```
 
 ### Functional-Testing:
-   This project tries to keep compatibility with the REST/WS API of 
-   [five-bells-ledger](https://github.com/interledgerjs/five-bells-ledger), that automatically
-   warrants compatibility with the [plugin](https://github.com/interledgerjs/ilp-plugin-bells) for the
-   [ilp connector reference implementation](https://github.com/interledgerjs/ilp-connector)
+   This project tries to keep compatibility with the REST/WS API of   [five-bells-ledger](https://github.com/interledgerjs/five-bells-ledger), that automatically
+   warrants compatibility with the [plugin](https://github.com/interledgerjs/ilp-plugin-bells) for the  [ilp connector reference implementation](https://github.com/interledgerjs/ilp-connector)
 
    A subset of five-bells-ledger tests adapted to this project are available at:
    https://github.com/interledgerjs/five-bells-ledger, branch: earizon-adaptedTest4JavaVertXLedger
@@ -33,12 +22,17 @@ Read developers docs @ dev_docs for more info
   * Option 1:(gradle): ``` $ gradle :launchServer ```
   * Option 2:(eclipse/Netbeans/...): Run/debug next class as a java application:
      ```.../org/interledger/ilp/ledger/api/Main.java ```
+     ​
+
+###IntelliJ integration:
+  * Create a new project and import interledger-ledger and java-ilp-core in sibling directories as gradle modules.
+  * To use the java-ilp-core master branch set ```use_java_ilp_core = false ```  in build.gradle. To use a local java-ilp-core (in sibling directory) set it to true.
 
 ### Eclipse integration:
-  * Option 1: (Easiest): Add official Eclipse Gradle pluging. Then import this root project as gradle project.
-  
+  * Option 1: (Recomended): Add official Eclipse Gradle pluging. Then import this project as gradle project. Read notes about use_java_ilp_core in IntelliJ integration.
   * Option 2: (Manual): Create eclipse .project & .classpath files for each project with ``` $ gradle eclipse ```.
     (Then use File -> Import ... -> Existing projects from workspace and select the "Search for nested projects")
+  * There is an eclipse kotlin plugin, but not as mature as the IntelliJ one. (WARN: Not tested).
 
 ### Other common tasks:
 ``` 
@@ -57,7 +51,7 @@ Generate random Private/Public keys used in application.conf:
    - ledger.ed25519.notificationSignPublicKey
 
 ./gradlew printRandomDSAEd25519PrivPubKey
-``` 
+```
 
 ```
 Create HTTPS TLS certificates:
@@ -81,7 +75,7 @@ Common code snippets are documented at dev_docs/code_snippets.txt (work in progr
 
 ## Contributors
 
-Any contribution is very much appreciated! [![gitter][gitter-image]][gitter-url]
+Any contribution is very much appreciated!
 
 ## License
 
