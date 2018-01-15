@@ -1,7 +1,7 @@
 package com.everis.everledger.ifaces.transfer;
 
-import org.interledger.Condition;
-import org.interledger.Fulfillment;
+import org.interledger.cryptoconditions.PreimageSha256Condition;
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 import org.interledger.InterledgerAddress;
 
 import java.time.ZonedDateTime;
@@ -57,10 +57,10 @@ public interface IfaceILPLedgerTransfer {
   /**
    * Returns the condition under which the transfer will be executed.
    */
-  Condition getExecutionCondition();
+  PreimageSha256Condition getExecutionCondition();
 
 
-  public Fulfillment getExecutionFulfillment();
+  public PreimageSha256Fulfillment getExecutionFulfillment();
 
   /**
    * The date when the transfer expires and will be rejected by the ledger.

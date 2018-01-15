@@ -9,8 +9,8 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
-import org.interledger.Condition
-import org.interledger.Fulfillment
+import org.interledger.cryptoconditions.PreimageSha256Condition
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment
 import org.interledger.InterledgerAddress
 import org.interledger.InterledgerProtocolException
 import org.interledger.ilp.InterledgerProtocolError
@@ -93,8 +93,8 @@ object ConversionUtil {
 
     fun toNumber(value: Any): Number = if (value is Number) value else NumberUtils.createNumber(value.toString())
 
-    fun fulfillmentToBase64(FF: Fulfillment): String {
-        var response = Base64.getEncoder().encodeToString(FF.preimage)
+    fun fulfillmentToBase64(FF: PreimageSha256Fulfillment): String {
+        var response = FF.preimage
         response = response.substring(0, response.indexOf('='))
         return response
     }
@@ -108,7 +108,7 @@ object ConversionUtil {
      * @return
      * *  The crypto condition
      */
-    fun parseURI(uri: URI): Condition {
+    fun parseURI(uri: URI): PreimageSha256Condition {
         //based strongly on the five bells implementation at
         //https://github.com/interledgerjs/five-bells-condition (7b6a97990cd3a51ee41b276c290e4ae65feb7882)
         if ("ni" != uri.scheme) {
@@ -125,7 +125,7 @@ object ConversionUtil {
         }
 
         val fingerprint = Base64.getUrlDecoder().decode(m.group(2))
-        return Condition.builder().hash(fingerprint).build()
+        return PreimageSha256Fulfillment(fingerprint).getCondition()
     }
 
     fun parseNonEmptyString(input: String) : String {

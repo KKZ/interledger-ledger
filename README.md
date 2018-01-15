@@ -8,6 +8,11 @@ Read developers docs @ dev_docs for more info
 ## Current status.
 At this moment some important features are missing but functional tests are passing. See "TODO" tasks in code to get a detailed review of all pending low-level task and the github issues for other missing features.
 
+### Requirements:
+
+* Java JDK 8
+* Java Cryptography Extension Unlimited Strength Jurisdiction Policy Files 8
+
 ### Build:
 ```  $ gradle build ```
 
@@ -27,7 +32,7 @@ At this moment some important features are missing but functional tests are pass
      ```.../org/interledger/ilp/ledger/api/Main.java ```
      ​
 
-###IntelliJ integration:
+### IntelliJ integration:
   * Create a new project and import interledger-ledger and java-ilp-core in sibling directories as gradle modules.
   * To use the java-ilp-core master branch set ```use_local_java_ilp_core = false ```  in build.gradle. To use a local java-ilp-core (in sibling directory) set it to true.
 

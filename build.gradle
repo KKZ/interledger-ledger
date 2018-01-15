@@ -5,8 +5,9 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.4-3"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
+    
 }
 
 apply plugin: 'java'
@@ -19,7 +20,9 @@ apply plugin: 'application'
 
 def use_local_java_ilp_core = false
 
-
+compileKotlin{
+  kotlinOptions.jvmTarget = "1.8"
+}
 
 mainClassName = 'com.everis.everledger.BootUpKotlinKt'
 
@@ -34,7 +37,7 @@ props.load(new FileInputStream("${projectDir}/external_library_versioning.prop")
   props.each { prop -> project.ext.set(prop.key, prop.value) }
 
 group = 'org.interledger'
-version = '1.0-SNAPSHOT'
+version = '1.1-SNAPSHOT'
 description = "Interledger Java simple ledger using VertX"
 
 sourceCompatibility = 1.8
@@ -59,6 +62,9 @@ dependencies {
         compile project(':java-ilp-core')
     } else {
         compile     "org.interledger:ilp-core:${java_ilp_core_version}"
+        compile     "org.interledger:ilp-annotations:${ilp_anottations_version}"
+        compile     "org.interledger:crypto-conditions:${ilp_crypto_conditions_version}"
+        compile     "org.interledger:dev-ops:${ilp_dev_ops_version}"
     }
     compile     "org.web3j:core:2.3.0"
     compile     "javax.money:money-api:${money_api_version}"
@@ -84,8 +90,7 @@ sourceSets {
 }
 task launchServer(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
-
-  main = 'org.interledger.everledger.common.api.ILPLedgerAPIBootUpVerticle'
+  main = mainClassName
 
   // arguments to pass to the application
   // args 'appArg1'
@@ -93,7 +98,7 @@ task launchServer(type: JavaExec) {
 
 task printRandomDSAEd25519PrivPubKey(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
-  main = 'org.interledger.everledger.common.util.DSAPrivPubKeySupport'
+  main = 'com.everis.everledger.util.DSAPrivPubKeySupport'
 }
 
 // task launchTestWebSocket(type: JavaExec) {

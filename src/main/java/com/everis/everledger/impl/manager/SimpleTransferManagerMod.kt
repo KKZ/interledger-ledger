@@ -14,8 +14,8 @@ import java.io.File
 
 import javax.money.MonetaryAmount
 
-import org.interledger.Condition
-import org.interledger.Fulfillment
+import org.interledger.cryptoconditions.PreimageSha256Condition
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment
 //import org.javamoney.moneta.Money
 // import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -72,7 +72,7 @@ private val accountManager  = SimpleAccountManager
 //     return singleton
 // }
 
-private fun notifyUpdate(transfer : IfaceTransferIfaceILP, fulfillment : Fulfillment, isExecution : Boolean){
+private fun notifyUpdate(transfer : IfaceTransferIfaceILP, fulfillment : PreimageSha256Fulfillment, isExecution : Boolean){
     try {
         val notification : JsonObject = (transfer as SimpleTransferIfaceILP).toILPJSONStringifiedFormat()
         // Notify affected accounts:
@@ -144,7 +144,7 @@ object SimpleTransferManager : IfaceTransferManager {
     // } END IfaceLocalTransferManager implementation
 
     // START IfaceILPSpecTransferManager implementation {
-    override fun getTransfersByExecutionCondition(condition : Condition ) :
+    override fun getTransfersByExecutionCondition(condition : PreimageSha256Condition ) :
             MutableList<IfaceTransferIfaceILP> {
         // For this simple implementation just run over existing transfers until
         val result = ArrayList<IfaceTransferIfaceILP>()
@@ -185,7 +185,7 @@ object SimpleTransferManager : IfaceTransferManager {
     }
 
 
-    private fun executeOrCancelILPTransfer(transfer : IfaceTransferIfaceILP, FF : Fulfillment, isExecution : Boolean  /*false => isCancellation*/) : IfaceTransferIfaceILP {
+    private fun executeOrCancelILPTransfer(transfer : IfaceTransferIfaceILP, FF : PreimageSha256Fulfillment, isExecution : Boolean  /*false => isCancellation*/) : IfaceTransferIfaceILP {
         val result: IfaceTransferIfaceILP
         if (isExecution /* => DisburseFunds */) {
             var txReceipt = __executeLocalTransfer(sender = accountManager.holdAccountILP, recipient = transfer.txOutput.localAccount, amount = transfer.amount)
@@ -207,12 +207,12 @@ object SimpleTransferManager : IfaceTransferManager {
     }
 
     // TODO:(?) Update returned instance in ddbb if needed
-    override fun executeILPTransfer(transfer : IfaceTransferIfaceILP, executionFulfillment : Fulfillment ) : IfaceTransferIfaceILP {
+    override fun executeILPTransfer(transfer : IfaceTransferIfaceILP, executionFulfillment : PreimageSha256Fulfillment ) : IfaceTransferIfaceILP {
         return executeOrCancelILPTransfer(transfer, executionFulfillment, true)
     }
 
     // TODO:(?) Update returned instance in ddbb if needed
-    override fun cancelILPTransfer (transfer : IfaceTransferIfaceILP, cancellationFulfillment : Fulfillment ) : IfaceTransferIfaceILP {
+    override fun cancelILPTransfer (transfer : IfaceTransferIfaceILP, cancellationFulfillment : PreimageSha256Fulfillment ) : IfaceTransferIfaceILP {
         return executeOrCancelILPTransfer(transfer, cancellationFulfillment, false)
     }
 

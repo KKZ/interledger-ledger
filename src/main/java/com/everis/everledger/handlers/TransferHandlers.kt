@@ -22,8 +22,8 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.RoutingContext
-import org.interledger.Condition
-import org.interledger.Fulfillment
+import org.interledger.cryptoconditions.PreimageSha256Condition
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment
 import org.interledger.ilp.InterledgerProtocolError
 import org.javamoney.moneta.Money
 import java.net.URI
@@ -122,7 +122,7 @@ private constructor() : RestEndpointHandler(
         }
 
         val execution_condition = requestBody.getString("execution_condition")
-        val URIExecutionCond: Condition = if (execution_condition != null)
+        val URIExecutionCond: PreimageSha256Condition = if (execution_condition != null)
             ConversionUtil.parseURI(URI.create(execution_condition))
             else CC_NOT_PROVIDED
         val jsonCredit = credits.getJsonObject(0)
@@ -278,7 +278,7 @@ class TransfersHandler : RestEndpointHandler(arrayOf(HttpMethod.GET), arrayOf("t
 
         //        Condition condition = CryptoConditionUri.parse(URI.create(testVector.getConditionUri()));
         val sExecCond = context.request().getParam(execCondition)
-        val executionCondition: Condition
+        val executionCondition: PreimageSha256Condition
         executionCondition = ConversionUtil.parseURI(URI.create(sExecCond))
         val transferList = TM.getTransfersByExecutionCondition(executionCondition)
 
@@ -482,7 +482,7 @@ class FulfillmentHandler : RestEndpointHandler(arrayOf(HttpMethod.GET, HttpMetho
         val fulfillmentBytes = Base64.getDecoder().decode(sFulfillmentInput)
         //        // REF: http://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java
         //        byte[] fulfillmentBytes = DatatypeConverter.parseHexBinary(sFulfillment);
-        val inputFF = Fulfillment.of(fulfillmentBytes)
+        val inputFF = PreimageSha256Fulfillment(fulfillmentBytes)
         // val message = byteArrayOf()
         var ffExisted = false // TODO:(0) Recheck usage
         log.trace("transfer.getExecutionCondition():" + transfer.executionCondition.toString())
@@ -490,7 +490,7 @@ class FulfillmentHandler : RestEndpointHandler(arrayOf(HttpMethod.GET, HttpMetho
         log.trace("request hexFulfillment:" + sFulfillmentInput)
         log.trace("request ff.getCondition():" + inputFF.condition.toString())
         if (transfer.executionCondition == inputFF.condition) {
-            if (!inputFF.validate(inputFF.condition))
+            if (!inputFF.equals(inputFF.condition))
                 throw ILPExceptionSupport.createILPUnprocessableEntityException("execution fulfillment doesn't validate")
             if (transfer.ilpExpiresAt.compareTo(ZonedDateTime.now()) < 0 && Config.unitTestsActive == false)
                 throw ILPExceptionSupport.createILPUnprocessableEntityException("transfer expired")

@@ -4,8 +4,8 @@ package com.everis.everledger.impl
 //      TXInput / TXoutput have a different incompatible meaning in Bitcoin,...
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import org.interledger.Condition
-import org.interledger.Fulfillment
+import org.interledger.cryptoconditions.PreimageSha256Condition
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment
 import org.interledger.InterledgerAddress
 import java.time.ZonedDateTime
 import javax.money.MonetaryAmount
@@ -28,8 +28,8 @@ import com.everis.everledger.impl .manager.SimpleAccountManager
 
 val random = Random()
 val a : ByteArray =  ByteArray(size = 32)
-val FF_NOT_PROVIDED : Fulfillment = { random.nextBytes(a) ; Fulfillment.builder().preimage(a).build() }()
-val CC_NOT_PROVIDED : Condition   = { random.nextBytes(a) ; Condition  .builder().hash(a)    .build() }()
+val FF_NOT_PROVIDED : PreimageSha256Fulfillment = { random.nextBytes(a) ; PreimageSha256Fulfillment(a)                  }()
+val CC_NOT_PROVIDED : PreimageSha256Condition   = { random.nextBytes(a) ; PreimageSha256Fulfillment(a).getCondition()   }()
 internal val AM = SimpleAccountManager
 
 
@@ -58,8 +58,8 @@ fun ILPSpec2LocalTransferID(ilpTransferID: UUID): LocalTransferID {
 data class SimpleTransferIfaceILP(
         val id: LocalTransferID,
         val _TXInput: TXInputImpl, val _TXOutput: TXOutputImpl,
-        val executionCond: Condition,
-        val cancelationCond: Condition,
+        val executionCond: PreimageSha256Condition,
+        val cancelationCond: PreimageSha256Condition,
         val DTTM_proposed: ZonedDateTime = ZonedDateTime.now(),
         val DTTM_prepared: ZonedDateTime = ZonedDateTime.now(),
         val DTTM_expires : ZonedDateTime = TimeUtils.future,
@@ -69,8 +69,8 @@ data class SimpleTransferIfaceILP(
         val noteToSelf: String = "",
         var _transferStatus: TransferStatus = TransferStatus.PROPOSED,
         val sMemo: String,
-        val executionFF   : Fulfillment = FF_NOT_PROVIDED,
-        val cancelationFF : Fulfillment = FF_NOT_PROVIDED,
+        val executionFF   : PreimageSha256Fulfillment = FF_NOT_PROVIDED,
+        val cancelationFF : PreimageSha256Fulfillment = FF_NOT_PROVIDED,
         var receipt: String = ""
     ) : IfaceTransferIfaceILP {
             internal val fromAccount: IfaceLocalAccount
@@ -105,14 +105,14 @@ data class SimpleTransferIfaceILP(
             override fun getNoteToSelf(): ByteArray = noteToSelf.toByteArray()
             override fun isRejected(): Boolean = false // TODO:(0) update when timed-out or cancellation-fullfillment  received
             override fun getRejectionMessage(): String = ""  // TODO:(0)
-            override fun getExecutionCondition(): Condition = executionCond
+            override fun getExecutionCondition(): PreimageSha256Condition = executionCond
          // override fun getCancellationCondition(): Condition = cancelationCond
             override fun getILPExpiresAt() : ZonedDateTime = DTTM_expires
             override fun getILPPreparedAt(): ZonedDateTime = DTTM_prepared
             override fun getILPExecutedAt(): ZonedDateTime = DTTM_executed
             override fun getILPRejectedAt(): ZonedDateTime = DTTM_rejected
             override fun getILPProposedAt(): ZonedDateTime = DTTM_proposed
-            override fun getExecutionFulfillment(): Fulfillment = executionFF
+            override fun getExecutionFulfillment(): PreimageSha256Fulfillment = executionFF
             override fun isILPAuthorized() : Boolean = isAuthorized()
             // } End ILPSpec interface
 
