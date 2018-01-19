@@ -490,7 +490,7 @@ class FulfillmentHandler : RestEndpointHandler(arrayOf(HttpMethod.GET, HttpMetho
         log.trace("request hexFulfillment:" + sFulfillmentInput)
         log.trace("request ff.getCondition():" + inputFF.condition.toString())
         if (transfer.executionCondition == inputFF.condition) {
-            if (!inputFF.equals(inputFF.condition))
+            if (!inputFF.verify(inputFF.condition, ByteArray(0)))
                 throw ILPExceptionSupport.createILPUnprocessableEntityException("execution fulfillment doesn't validate")
             if (transfer.ilpExpiresAt.compareTo(ZonedDateTime.now()) < 0 && Config.unitTestsActive == false)
                 throw ILPExceptionSupport.createILPUnprocessableEntityException("transfer expired")
