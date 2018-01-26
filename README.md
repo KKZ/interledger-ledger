@@ -1,4 +1,18 @@
 ## About
+
+---
+**Note 2018/01/26 KKZ**
+
+**This repository is already deprecated**  
+
+ILP architecture redesign from December 2017 is planned that will move all the logic away from settlement ledgers to connectors and trust-lines/payment-channels between peer connectors.
+
+https://github.com/interledger/rfcs/issues/359
+
+Save it as a reference or build configuration for calling up some libraries of Hyperledger Quilt.
+
+---
+
 Java/Kotlin ledger implementing a compliant subset of the [five-bells-ledger API](https://github.com/interledger/rfcs/tree/master/0012-five-bells-ledger-api) and Conditional Payment Channels (with HTLCs) as described in [HTLA Interledger RFC](https://github.com/interledger/rfcs/tree/master/0022-hashed-timelock-agreements). This project also serve to test [java-ilp-core  interfaces and specs](https://github.com/interledger/java-ilp-core/). 
 
 The current version uses Ethereum as supporting database for user balances. Actually, any backend (SQL database, blockchain, ...) able to support the com.everis.everledger.ifaces.account.IfaceAccount can be (theorically) be used as storage/balance-ledger. See [related issue](https://github.com/everis-innolab/interledger-ledger/issues/1)
